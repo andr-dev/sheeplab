@@ -1,0 +1,17 @@
+.env
+
+hass/.HA_VERSION
+hass/.storage/
+hass/blueprints/*/homeassistant
+hass/home-assistant.log*
+hass/home-assistant_v2.db*
+hass/secrets.yaml
+
+mosquitto/data/*
+mosquitto/logs/*
+
+zigbee2mqtt/coordinator_backup.json
+zigbee2mqtt/database.db
+zigbee2mqtt/log/*
+zigbee2mqtt/state.json
+

@@ -1,0 +1,30 @@
+# Configure a default setup of Home Assistant (frontend, api, etc)
+default_config:
+
+group: !include groups.yaml
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+homeassistant:
+  external_url: "https://hass"
+  internal_url: "https://hass"
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - "172.22.0.2"
+
+homekit:
+  name: HASS Bridge
+  advertise_ip: "192.168.1.2"
+  port: 21064
+  filter:
+    include_domains:
+      - binary_sensor
+      - fan
+      - light
+      - lock
+      - sensor
+      - switch
+

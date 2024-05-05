@@ -1,0 +1,96 @@
+networks:
+  default:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.22.0.0/24
+          gateway: 172.22.0.1
+
+services:
+  traefik:
+    container_name: traefik
+    image: traefik:v3.0.0
+    restart: always
+    networks:
+      default:
+        ipv4_address: 172.22.0.2
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "./traefik:/traefik:ro"
+      - "/etc/ssl/private/traefik.key:/etc/ssl/private/traefik.key:ro"
+      - "/etc/ssl/private/traefik.crt:/etc/ssl/private/traefik.crt:ro"
+
+    command:
+      - "--accesslog=true"
+      - "--api.dashboard=true"
+      - "--entryPoints.web.address=:80"
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      - "--entrypoints.websecure.address=:443"
+      - "--providers.docker"
+      - "--providers.docker.exposedbydefault=false"
+      - "--providers.file.directory=/traefik"
+      - "--global.sendAnonymousUsage=false"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.traefik.rule=Host(`traefik`)"
+      - "traefik.http.routers.traefik.entrypoints=websecure"
+      - "traefik.http.routers.traefik.tls=true"
+      - "traefik.http.routers.traefik.service=api@internal"
+
+  mosquitto:
+    container_name: mosquitto
+    image: eclipse-mosquitto:2.0.18
+    restart: always
+    networks:
+      default:
+        ipv4_address: 172.22.0.3
+    volumes:
+      - "./mosquitto:/mosquitto"
+
+  zigbee2mqtt:
+    container_name: zigbee2mqtt
+    image: koenkk/zigbee2mqtt:1.36.1
+    restart: always
+    networks:
+      default:
+        ipv4_address: 172.22.0.4
+    volumes:
+      - "./zigbee2mqtt:/app/data"
+    devices:
+      - "/dev/ttyUSB0"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.z2mqtt.rule=Host(`z2mqtt`)"
+      - "traefik.http.routers.z2mqtt.service=zigbee2mqtt"
+      - "traefik.http.routers.z2mqtt.entrypoints=websecure"
+      - "traefik.http.routers.z2mqtt.tls=true"
+      - "traefik.http.services.zigbee2mqtt.loadbalancer.server.port=8080"
+    depends_on:
+      - mosquitto
+
+  homeassistant:
+    container_name: homeassistant
+    image: homeassistant/home-assistant:stable
+    restart: always
+    networks:
+      default:
+        ipv4_address: 172.22.0.5
+    ports:
+      - 21064:21064
+    volumes:
+      - "./hass:/config"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.hass.rule=Host(`hass`)"
+      - "traefik.http.routers.hass.service=homeassistant"
+      - "traefik.http.routers.hass.entrypoints=websecure"
+      - "traefik.http.routers.hass.tls=true"
+      - "traefik.http.services.homeassistant.loadbalancer.server.port=8123"
+    depends_on:
+      - mosquitto
+      - zigbee2mqtt
+
