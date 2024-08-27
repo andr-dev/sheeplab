@@ -1,0 +1,26 @@
+[sheeppen_hass]
+module = "sheeppen.hass"
+global = true
+
+[sheeppen_state]
+module = "sheeppen.state"
+global = true
+dependencies = [
+    "sheeppen_hass",
+]
+
+[sheeppen_config]
+module = "sheeppen.config"
+global = true
+dependencies = [
+    "sheeppen_hass",
+]
+
+[sheeppen_daemon]
+module = "sheeppen.daemon"
+class = "SheepPenDaemon"
+dependencies = [
+    "sheeppen_state",
+    "sheeppen_config",
+]
+sheeppen_config = "sheeppen_config,toml"
